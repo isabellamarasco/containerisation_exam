@@ -1,0 +1,48 @@
+services:
+  experiment-rf:
+    build: &experiment_build
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: 3.12
+    volumes: &volumes
+      - ./data:/data
+    deploy: &resource_config
+      resources:
+        limits:
+          memory: 128G
+    hostname: rf
+    environment:
+      DATA_OWNER: &owner 1000:1000
+      MODEL_RandomForest: |
+          sklearn.ensemble.RandomForestClassifier:
+              n_estimators: [10, 50, 100]
+              max_depth: [null, 10, 20]
+
+  experiment-mlp:
+    build: *experiment_build
+    volumes: *volumes
+    deploy: *resource_config
+    hostname: mlp
+    environment:
+      DATA_OWNER: *owner
+      MODEL_MLP: |
+          sklearn.neural_network.MLPClassifier:
+              hidden_layer_sizes:
+                - [50]
+                - [100,]
+                - [50, 50]
+              activation: ['tanh', 'relu']
+              solver: ['adam', 'sgd']
+
+  experiment-if:
+    build: *experiment_build
+    volumes: *volumes
+    deploy: *resource_config
+    hostname: if
+    environment:
+      DATA_OWNER: *owner
+      MODEL_IsolationForest: |
+          sklearn.ensemble.IsolationForest:
+              n_estimators: [100, 200]
+              contamination: ['auto']

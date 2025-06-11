@@ -1,0 +1,8 @@
+jupyter
+jupyterlab
+notebook
+numpy
+openml
+scikit-learn
+matplotlib
+PyYAML

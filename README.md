@@ -6,7 +6,7 @@ This project is designed to run anomaly detection experiments using various scik
 The core of the project is the anomaly_detection.py script. This script performs the following steps:
 1. Configuration: It reads configuration from environment variables. These include the dataset ID from OpenML, test set size, cross-validation folds, and model-specific hyperparameters.
 2. Experiment ID: It computes a unique EXPERIMENT_ID based on the current experiment's configuration. This is used to prevent re-running identical experiments.
-3. Data Loading & Preprocessing: It downloads the specified dataset (CIC-IDS 2017) from OpenML, applies one-hot encoding to categorical features, and prepares the target variable for anomaly detection.
+3. Data Loading & Preprocessing: It downloads the specified dataset (BoT-IoT) from OpenML, applies one-hot encoding to categorical features, and prepares the target variable for anomaly detection.
 4. Model Training: It uses GridSearchCV to train and tune the specified machine learning models with the provided hyperparameters. It includes special handling for models like IsolationForest that do not require standard cross-validation.
 5. Evaluation & Comparison: The script evaluates the models based on their cross-validation accuracy scores, and identifies the best-performing model.
 

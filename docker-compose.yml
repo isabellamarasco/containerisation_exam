@@ -7,13 +7,11 @@ services:
         PYTHON_VERSION: 3.12
     volumes: &volumes
       - ./data:/data
-    deploy: &resource_config
-      resources:
-        limits:
-          memory: 128G
     hostname: rf
     environment:
       DATA_OWNER: &owner 1000:1000
+      MAX_SAMPLES: 50_0000 
+      N_JOBS: 1  
       MODEL_RandomForest: |
           sklearn.ensemble.RandomForestClassifier:
               n_estimators: [10, 50, 100]
@@ -22,10 +20,11 @@ services:
   experiment-mlp:
     build: *experiment_build
     volumes: *volumes
-    deploy: *resource_config
     hostname: mlp
     environment:
       DATA_OWNER: *owner
+      MAX_SAMPLES: 50_0000  
+      N_JOBS: 1  
       MODEL_MLP: |
           sklearn.neural_network.MLPClassifier:
               hidden_layer_sizes:
@@ -34,15 +33,3 @@ services:
                 - [50, 50]
               activation: ['tanh', 'relu']
               solver: ['adam', 'sgd']
-
-  experiment-if:
-    build: *experiment_build
-    volumes: *volumes
-    deploy: *resource_config
-    hostname: if
-    environment:
-      DATA_OWNER: *owner
-      MODEL_IsolationForest: |
-          sklearn.ensemble.IsolationForest:
-              n_estimators: [100, 200]
-              contamination: ['auto']

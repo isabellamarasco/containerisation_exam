@@ -1,5 +1,6 @@
-DATASET_ID: 4534
+DATASET_ID: 42072
 K_FOLDS: 5
+MAX_SAMPLES: 500000
 MODELS:
   RandomForest:
   - sklearn.ensemble.RandomForestClassifier

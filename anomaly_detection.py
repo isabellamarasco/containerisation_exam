@@ -44,16 +44,17 @@ def create_scikit_learn_model(class_name):
     return klass()
 
 # Set up environment hyper-parameters from the environment, with safe defaults
-DATASET_ID = int(os.getenv('DATASET_ID', "45277")) # KDD99-CUP dataset or 42072 BoT-IoT
+DATASET_ID = int(os.getenv('DATASET_ID', "42072"))
 TEST_SIZE = float(os.getenv('TEST_SIZE', "0.2"))
 RANDOM_STATE = int(os.getenv('RANDOM_STATE', "42"))
 K_FOLDS = int(os.getenv('K_FOLDS', "5"))
 SCORING = os.getenv('SCORING', 'accuracy')
 PICTURE_SIZE = tuple(map(int, os.getenv('PICTURE_SIZE', '10,6').split(',')))
+MAX_SAMPLES = int(os.getenv('MAX_SAMPLES', "50_000"))
 MODELS = get_grid_search_entries_from_env()
 
 # Compute a unique experiment ID based on the hyper-parameters
-FOOTPRINT_KEYS = {'DATASET_ID', 'TEST_SIZE', 'RANDOM_STATE', 'K_FOLDS', 'SCORING', 'PICTURE_SIZE', 'MODELS'}
+FOOTPRINT_KEYS = {'DATASET_ID', 'TEST_SIZE', 'RANDOM_STATE', 'K_FOLDS', 'SCORING', 'PICTURE_SIZE', 'MODELS', 'MAX_SAMPLES'}
 EXPERIMENT_FOOTPRINT = {k: v for k, v in locals().items() if k in FOOTPRINT_KEYS}
 EXPERIMENT_FOOTPRINT_YAML = yaml.dump(EXPERIMENT_FOOTPRINT, sort_keys=True)
 EXPERIMENT_ID = sha512(EXPERIMENT_FOOTPRINT_YAML.encode()).hexdigest()
@@ -74,13 +75,33 @@ print(f'Running experiment ID {EXPERIMENT_ID[:8]}', file=sys.stderr)
 print(f'Output directory: {OUTPUT_DIR}', file=sys.stderr)
 print(f'Experiment footprint:\n\t{EXPERIMENT_FOOTPRINT_YAML.replace("\n", "\n\t")}', file=sys.stderr)
 
-
-# Load the KDD-99 dataset from OpenML
 dataset = openml.datasets.get_dataset(DATASET_ID, download_all_files=True)
 X, y, categorical_indicator, attribute_names = dataset.get_data(target=dataset.default_target_attribute)
 
-# Preprocess target variable for Isolation Forest (normal vs. anomaly)
-y = np.where(y == 'normal', 1, -1)
+print(f"Original dataset: {X.shape[0]} samples, {X.shape[1]} features", file=sys.stderr)
+if X.shape[0] > MAX_SAMPLES:
+    print(f"Reducing the dataset to {MAX_SAMPLES} samples to limit memory usage", file=sys.stderr)
+    if hasattr(X, 'iloc'):  
+        indices = np.arange(X.shape[0])
+        train_indices, _ = train_test_split(
+            indices, 
+            train_size=MAX_SAMPLES,
+            stratify=y,
+            random_state=RANDOM_STATE
+        )
+        X = X.iloc[train_indices]
+        y = y.iloc[train_indices]
+    else:  
+        indices = np.arange(X.shape[0])
+        train_indices, _ = train_test_split(
+            indices, 
+            train_size=MAX_SAMPLES,
+            stratify=y,
+            random_state=RANDOM_STATE
+        )
+        X = X[train_indices]
+        y = y[train_indices]
+    print(f"Reduced dataset: {X.shape[0]} samples, {X.shape[1]} features", file=sys.stderr)
 
 # Preprocess categorical features
 categorical_features = [i for i, is_cat in enumerate(categorical_indicator) if is_cat]
@@ -100,19 +121,13 @@ results = {}
 best_estimators = {}
 
 for clf_name, (clf, params) in classifiers.items():
-    if clf_name == 'IsolationForest':
-        # Isolation Forest does not support cross-validation in the same way
-        clf.fit(X_train)
-        y_pred = clf.predict(X_train)
-        results[clf_name] = [accuracy_score(y_train, y_pred)]
-        best_estimators[clf_name] = clf
-    else:
-        grid_search = GridSearchCV(clf, param_grid=params, cv=K_FOLDS, scoring=SCORING)
-        grid_search.fit(X_train, y_train)
+    n_jobs = int(os.getenv('N_JOBS', "1"))  # Limit parallelism to reduce memory usage
+    grid_search = GridSearchCV(clf, param_grid=params, cv=K_FOLDS, scoring=SCORING, n_jobs=n_jobs)
+    grid_search.fit(X_train, y_train)
 
-        # Save the cross-validation scores and best estimator
-        results[clf_name] = grid_search.cv_results_['mean_test_score']
-        best_estimators[clf_name] = grid_search.best_estimator_
+    # Save the cross-validation scores and best estimator
+    results[clf_name] = grid_search.cv_results_['mean_test_score']
+    best_estimators[clf_name] = grid_search.best_estimator_
 
 
 # Select the best model and evaluate on test set
@@ -120,9 +135,7 @@ best_model_name = max(results, key=lambda k: max(results[k]))
 best_model = best_estimators[best_model_name]
 
 # Retrain the best model on the full training data before final evaluation
-# For IsolationForest, it's already "fitted"
-if best_model_name != 'IsolationForest':
-    best_model.fit(X_train, y_train)
+best_model.fit(X_train, y_train)
 
 # Test set evaluation
 y_pred = best_model.predict(X_test)
@@ -135,7 +148,7 @@ print(f'Test Set Accuracy: {test_accuracy:.4f}')
 with open(OUTPUT_DIR / 'model.pkl', 'wb') as file:
     pickle.dump(best_model, file)
 
-
 # Save experiment footprint into OUTPUT_DIR/EXPERIMENT_ID.yaml
 with open(OUTPUT_DIR / f'{EXPERIMENT_ID}.yaml', 'w') as file:
     yaml.dump(EXPERIMENT_FOOTPRINT, file)
+

@@ -14,7 +14,6 @@ The core of the project is the anomaly_detection.py script. This script performs
 The project uses Docker and Docker Compose to manage the experimental environment. The docker-compose.yml file defines services to run experiments for different models in isolation:
 - experiment-rf: Tests a RandomForestClassifier.
 - experiment-mlp: Tests an MLPClassifier.
-- experiment-if: Tests an IsolationForest model.
 
 Each service is built from a common Dockerfile and runs the same Python script, but with different environment variables to specify the model and its hyperparameters.
 

@@ -10,12 +10,12 @@ services:
     hostname: rf
     environment:
       DATA_OWNER: &owner 1000:1000
-      MAX_SAMPLES: 50_0000 
+      MAX_SAMPLES: 10_000 
       N_JOBS: 1  
       MODEL_RandomForest: |
           sklearn.ensemble.RandomForestClassifier:
-              n_estimators: [10, 50, 100]
-              max_depth: [null, 10, 20]
+              n_estimators: [10, 50]
+              max_depth: [10, 20]
 
   experiment-mlp:
     build: *experiment_build
@@ -23,13 +23,14 @@ services:
     hostname: mlp
     environment:
       DATA_OWNER: *owner
-      MAX_SAMPLES: 50_0000  
+      MAX_SAMPLES: 10_000  
       N_JOBS: 1  
+      N_ITER: 10 
       MODEL_MLP: |
           sklearn.neural_network.MLPClassifier:
               hidden_layer_sizes:
                 - [50]
-                - [100,]
                 - [50, 50]
               activation: ['tanh', 'relu']
-              solver: ['adam', 'sgd']
+
+

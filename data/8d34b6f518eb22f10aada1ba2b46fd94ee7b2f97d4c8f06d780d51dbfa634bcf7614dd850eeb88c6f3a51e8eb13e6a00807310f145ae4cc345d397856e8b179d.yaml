@@ -1,0 +1,18 @@
+DATASET_ID: 42072
+K_FOLDS: 5
+MAX_SAMPLES: 50000
+MODELS:
+  RandomForest:
+  - sklearn.ensemble.RandomForestClassifier
+  - max_depth:
+    - 10
+    - 20
+    n_estimators:
+    - 10
+    - 50
+PICTURE_SIZE: !!python/tuple
+- 10
+- 6
+RANDOM_STATE: 42
+SCORING: accuracy
+TEST_SIZE: 0.2

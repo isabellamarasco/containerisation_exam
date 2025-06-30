@@ -50,7 +50,7 @@ RANDOM_STATE = int(os.getenv('RANDOM_STATE', "42"))
 K_FOLDS = int(os.getenv('K_FOLDS', "5"))
 SCORING = os.getenv('SCORING', 'accuracy')
 PICTURE_SIZE = tuple(map(int, os.getenv('PICTURE_SIZE', '10,6').split(',')))
-MAX_SAMPLES = int(os.getenv('MAX_SAMPLES', "50_000"))
+MAX_SAMPLES = int(os.getenv('MAX_SAMPLES', "10_000"))
 MODELS = get_grid_search_entries_from_env()
 
 # Compute a unique experiment ID based on the hyper-parameters
@@ -108,7 +108,6 @@ categorical_features = [i for i, is_cat in enumerate(categorical_indicator) if i
 preprocessor = ColumnTransformer(transformers=[('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)], remainder='passthrough')
 X = preprocessor.fit_transform(X)
 
-
 # Ensure test set contains at least one instance of each class
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=TEST_SIZE, stratify=y, random_state=RANDOM_STATE)
 
@@ -141,7 +140,7 @@ best_model.fit(X_train, y_train)
 y_pred = best_model.predict(X_test)
 test_accuracy = accuracy_score(y_test, y_pred)
 
-print(f'Best Model: {best_model_name}')
+print(f'Model: {best_model_name}')
 print(f'Test Set Accuracy: {test_accuracy:.4f}')
 
 # Save the best model to OUTPUT_DIR/model.pkl

@@ -29,7 +29,7 @@ To run the project, follow these steps:
    ```
 2. Navigate to the project directory:
    ```bash
-   cd Containerisation_exam
+   cd containerisation_exam
    ```
 3. Build the Docker images:
    ```bash

@@ -1,13 +1,14 @@
 ARG PYTHON_VERSION=3.12
 FROM python:${PYTHON_VERSION}-slim
-ARG DATA_OWNER=1000:1000
-ARG USER_ID=1000
-ARG GROUP_ID=1000
-RUN addgroup --gid ${GROUP_ID} appgroup && \
-    adduser --uid ${USER_ID} --gid ${GROUP_ID} --disabled-password --gecos "" appuser
-WORKDIR /app
+RUN mkdir -p /experiment
+VOLUME "/data"
+ENV DATA_DIR=/data
+WORKDIR /experiment
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-USER appuser
-ENTRYPOINT ["python", "anomaly_detection.py"]
+COPY * /experiment/
+ENV OWNER=1000:1000
+CMD export OUTPUT_DIR=$DATA_DIR/$(date +%Y-%m-%d-%H-%M-%S)-$(hostname) && \
+    mkdir -p $OUTPUT_DIR && \
+    python anomaly_detection.py | tee $OUTPUT_DIR/output.log && \
+    chown -R $OWNER $DATA_DIR

@@ -49,8 +49,8 @@ TEST_SIZE = float(os.getenv('TEST_SIZE', "0.2"))
 RANDOM_STATE = int(os.getenv('RANDOM_STATE', "42"))
 K_FOLDS = int(os.getenv('K_FOLDS', "5"))
 SCORING = os.getenv('SCORING', 'accuracy')
-PICTURE_SIZE = tuple(map(int, os.getenv('PICTURE_SIZE', '10,6').split(',')))
-MAX_SAMPLES = int(os.getenv('MAX_SAMPLES', "10_000"))
+#PICTURE_SIZE = tuple(map(int, os.getenv('PICTURE_SIZE', '10,6').split(',')))
+MAX_SAMPLES = int(os.getenv('MAX_SAMPLES', "50_000"))
 MODELS = get_grid_search_entries_from_env()
 
 # Compute a unique experiment ID based on the hyper-parameters
